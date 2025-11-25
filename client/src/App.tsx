@@ -18,15 +18,15 @@ import {
   FileCode,
   CheckSquare,
   CloudUpload,
-  Save,
   Layers,
   Database,
-  Cpu,
-  Box
+  Box,
+  GitMerge,
+  Workflow
 } from 'lucide-react';
 
 // --- 类型定义 ---
-type StepId = 'intro' | 'stack' | 'env' | 'init' | 'tailwind' | 'migrate' | 'git' | 'launch' | 'backend' | 'deploy';
+type StepId = 'intro' | 'stack' | 'env' | 'init' | 'tailwind' | 'migrate' | 'git' | 'launch' | 'backend' | 'deploy' | 'advanced';
 
 interface Step {
   id: StepId;
@@ -37,15 +37,16 @@ interface Step {
 
 const steps: Step[] = [
   { id: 'intro', title: '旅程概览', icon: LayoutTemplate, description: '从 Gemini 原型到独立产品' },
-  { id: 'stack', title: '1. 技术栈解密', icon: Layers, description: '深度解析 React 生态系统' }, // New
+  { id: 'stack', title: '1. 技术栈解密', icon: Layers, description: '深度解析 React 生态系统' },
   { id: 'env', title: '2. 工具准备', icon: MonitorPlay, description: 'Node.js, Git & Cursor' },
   { id: 'init', title: '3. 创建项目', icon: FolderOpen, description: '终端模式 vs Cursor AI 模式' },
   { id: 'tailwind', title: '4. 样式配置', icon: Code2, description: '注入 Tailwind CSS 灵魂' },
   { id: 'migrate', title: '5. 搬运代码', icon: Laptop, description: '从这里复制到那里' },
   { id: 'git', title: '6. 版本控制', icon: GitBranch, description: 'Git 原理与上传' },
   { id: 'launch', title: '7. 本地测试', icon: Rocket, description: '在本地跑起来' },
-  { id: 'backend', title: '8. 后端演进', icon: Database, description: 'Node.js + 数据库架构' }, // New
-  { id: 'deploy', title: '9. 线上部署', icon: Globe, description: '前端、后端与数据库上云' }, // Expanded
+  { id: 'backend', title: '8. 后端演进', icon: Database, description: 'Node.js + 数据库架构' },
+  { id: 'deploy', title: '9. 线上部署', icon: Globe, description: '前端、后端与数据库上云' },
+  { id: 'advanced', title: '10. 进阶概念', icon: Workflow, description: '分支策略与 CI/CD 流水线' }, // New
 ];
 
 export default function DeploymentGuide() {
@@ -54,15 +55,16 @@ export default function DeploymentGuide() {
   const StepContent = () => {
     switch (currentStep) {
       case 'intro': return <IntroView setStep={setCurrentStep} />;
-      case 'stack': return <StackView />; // New
+      case 'stack': return <StackView />;
       case 'env': return <EnvView />;
       case 'init': return <InitView />;
       case 'tailwind': return <TailwindView />;
       case 'migrate': return <MigrateView />;
       case 'git': return <GitView />;
       case 'launch': return <LaunchView />;
-      case 'backend': return <BackendView />; // New
-      case 'deploy': return <DeployView />; // Expanded
+      case 'backend': return <BackendView />;
+      case 'deploy': return <DeployView />;
+      case 'advanced': return <AdvancedView />; // New
       default: return <IntroView setStep={setCurrentStep} />;
     }
   };
@@ -76,7 +78,7 @@ export default function DeploymentGuide() {
             <Rocket className="text-indigo-500" /> 
             Deploy OS
           </h1>
-          <p className="text-xs text-slate-500 mt-2">SaaS 全栈落地指南 v3.0</p>
+          <p className="text-xs text-slate-500 mt-2">SaaS 全栈落地指南 v3.1</p>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-1">
@@ -132,7 +134,7 @@ export default function DeploymentGuide() {
           </button>
           
           <button 
-            disabled={currentStep === 'deploy'}
+            disabled={currentStep === 'advanced'}
             onClick={() => {
               const idx = steps.findIndex(s => s.id === currentStep);
               if (idx < steps.length - 1) setCurrentStep(steps[idx + 1].id);
@@ -567,6 +569,90 @@ const DeployView = () => (
                 <li>在 Environment Variables 中填入 API Key 和 Supabase 的数据库 URL。</li>
                 <li>Deploy! 你会获得后端 API 地址，记得把它更新到前端代码里。</li>
             </ol>
+        </div>
+    </div>
+  </div>
+);
+
+const AdvancedView = () => (
+  <div className="space-y-8 animate-in fade-in duration-500">
+    <Header title="10. 进阶：分支与 CI/CD" subtitle="如何像大公司一样管理代码？" />
+    
+    {/* Intro */}
+    <p className="text-slate-400">
+        你在 GitHub 上看到的术语可能让你困惑。别担心，对于现在的你來說，这些大部分是自动完成的。
+    </p>
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Branching */}
+        <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-purple-900/20 rounded text-purple-400"><GitBranch size={24} /></div>
+                <h3 className="font-bold text-white text-lg">分支 (Branches)</h3>
+            </div>
+            
+            <div className="space-y-4 text-sm text-slate-400">
+                <p>想象 Git 宇宙中的 <strong>"平行时空"</strong>。</p>
+                
+                <div className="bg-slate-900 p-4 rounded border border-slate-800 flex flex-col gap-4 relative overflow-hidden">
+                    {/* Main Branch */}
+                    <div className="flex items-center gap-3 z-10">
+                        <div className="w-2 h-full bg-green-500/20 absolute left-6 top-0 bottom-0"></div>
+                        <div className="w-4 h-4 rounded-full bg-green-500 z-10"></div>
+                        <div className="flex-1">
+                            <span className="text-green-400 font-mono font-bold">main</span>
+                            <p className="text-xs opacity-60">主宇宙：这里是用户看到的稳定版本。</p>
+                        </div>
+                    </div>
+
+                    {/* Feature Branch */}
+                    <div className="flex items-center gap-3 pl-8 z-10 relative">
+                        <GitMerge className="text-slate-600 absolute left-2 top-[-10px] rotate-90" size={20} />
+                        <div className="w-4 h-4 rounded-full bg-purple-500 z-10"></div>
+                        <div className="flex-1">
+                            <span className="text-purple-400 font-mono font-bold">feature/login</span>
+                            <p className="text-xs opacity-60">实验宇宙：在这里开发新功能，怎么改都不会搞坏主宇宙。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-purple-900/10 p-3 rounded border border-purple-500/20 text-xs text-purple-200">
+                    <strong>新手建议：</strong> 暂时只用 <code>main</code> 分支即可。等你有了团队，或者需要开发很复杂的功能时，再开新分支。
+                </div>
+            </div>
+        </div>
+
+        {/* CI/CD */}
+        <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-orange-900/20 rounded text-orange-400"><Workflow size={24} /></div>
+                <h3 className="font-bold text-white text-lg">CI/CD 流水线</h3>
+            </div>
+            
+            <div className="space-y-4 text-sm text-slate-400">
+                <p>全称是 <strong>持续集成 / 持续部署</strong>。简单说就是 <strong>"全自动外卖厨房"</strong>。</p>
+                
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800">
+                        <Laptop size={16} className="text-slate-500" />
+                        <span>1. 你在本地写好代码，推送到 GitHub。</span>
+                    </div>
+                    <div className="flex justify-center"><ArrowRight size={16} className="rotate-90" /></div>
+                    <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800">
+                        <Bot size={16} className="text-blue-400" />
+                        <span>2. GitHub 告诉 Vercel: "有新货到了！"</span>
+                    </div>
+                    <div className="flex justify-center"><ArrowRight size={16} className="rotate-90" /></div>
+                    <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800">
+                        <Rocket size={16} className="text-green-400" />
+                        <span>3. Vercel 自动打包、测试、发布上线。</span>
+                    </div>
+                </div>
+
+                <div className="bg-green-900/10 p-3 rounded border border-green-500/20 text-xs text-green-200">
+                    <strong>好消息：</strong> 只要你把 GitHub 連接到 Vercel，這套流水線就自動建好了。以後你每次 <code>git push</code>，網站就會自動更新！
+                </div>
+            </div>
         </div>
     </div>
   </div>
