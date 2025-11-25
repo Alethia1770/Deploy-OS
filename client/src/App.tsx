@@ -9,6 +9,7 @@ import {
   ArrowRight, 
   Copy, 
   ChevronRight,
+  ChevronLeft, // 新增：收缩图标
   MonitorPlay,
   Laptop,
   Globe,
@@ -22,7 +23,11 @@ import {
   Database,
   Box,
   GitMerge,
-  Workflow
+  Workflow,
+  AlertTriangle,
+  Wrench,
+  Menu, 
+  X
 } from 'lucide-react';
 
 // --- 类型定义 ---
@@ -46,15 +51,22 @@ const steps: Step[] = [
   { id: 'launch', title: '7. 本地测试', icon: Rocket, description: '在本地跑起来' },
   { id: 'backend', title: '8. 后端演进', icon: Database, description: 'Node.js + 数据库架构' },
   { id: 'deploy', title: '9. 线上部署', icon: Globe, description: '前端、后端与数据库上云' },
-  { id: 'advanced', title: '10. 进阶概念', icon: Workflow, description: '分支策略与 CI/CD 流水线' }, // New
+  { id: 'advanced', title: '10. 进阶概念', icon: Workflow, description: '分支策略与 CI/CD 流水线' },
 ];
 
 export default function DeploymentGuide() {
   const [currentStep, setCurrentStep] = useState<StepId>('intro');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // 新增：控制桌面侧边栏收缩
+
+  const handleStepChange = (id: StepId) => {
+    setCurrentStep(id);
+    setIsMobileMenuOpen(false);
+  };
 
   const StepContent = () => {
     switch (currentStep) {
-      case 'intro': return <IntroView setStep={setCurrentStep} />;
+      case 'intro': return <IntroView setStep={handleStepChange} />;
       case 'stack': return <StackView />;
       case 'env': return <EnvView />;
       case 'init': return <InitView />;
@@ -64,49 +76,104 @@ export default function DeploymentGuide() {
       case 'launch': return <LaunchView />;
       case 'backend': return <BackendView />;
       case 'deploy': return <DeployView />;
-      case 'advanced': return <AdvancedView />; // New
-      default: return <IntroView setStep={setCurrentStep} />;
+      case 'advanced': return <AdvancedView />;
+      default: return <IntroView setStep={handleStepChange} />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-slate-900 text-slate-200 font-sans selection:bg-indigo-500/30">
+    <div className="flex flex-col md:flex-row h-screen bg-slate-900 text-slate-200 font-sans selection:bg-indigo-500/30 overflow-hidden">
+      
+      {/* Mobile Header (仅手机端显示) */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-slate-950 border-b border-slate-800 shrink-0 z-50">
+        <div className="flex items-center gap-2 font-bold text-white">
+          <Rocket className="text-indigo-500" size={20} />
+          <span>Deploy OS</span>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
       {/* Sidebar Navigation */}
-      <div className="w-72 bg-slate-950 border-r border-slate-800 flex flex-col shrink-0">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Rocket className="text-indigo-500" /> 
-            Deploy OS
-          </h1>
-          <p className="text-xs text-slate-500 mt-2">SaaS 全栈落地指南 v3.1</p>
+      <div className={`
+        fixed inset-0 z-40 bg-slate-950/95 backdrop-blur-sm transition-all duration-300 
+        md:translate-x-0 md:relative md:inset-auto md:bg-slate-950 md:border-r md:border-slate-800 md:flex md:flex-col md:shrink-0
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isSidebarCollapsed ? 'md:w-20' : 'md:w-72'} 
+      `}>
+        {/* Sidebar Header */}
+        <div className={`p-4 md:p-6 border-b border-slate-800 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+          {!isSidebarCollapsed && (
+            <div>
+              <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                <Rocket className="text-indigo-500" /> 
+                Deploy OS
+              </h1>
+              <p className="text-xs text-slate-500 mt-2">SaaS 全栈落地指南 v4.1</p>
+            </div>
+          )}
+          {isSidebarCollapsed && (
+             <Rocket className="text-indigo-500" size={24} />
+          )}
+
+          {/* Desktop Collapse Toggle */}
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="hidden md:block p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            title={isSidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}
+          >
+            {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4 space-y-1">
+        {/* Sidebar Items */}
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-1 pt-20 md:pt-4 scrollbar-hide">
           {steps.map((step) => (
             <button
               key={step.id}
-              onClick={() => setCurrentStep(step.id)}
-              className={`w-full flex items-center p-3 rounded-lg transition-all text-left group ${
-                currentStep === step.id 
+              onClick={() => handleStepChange(step.id)}
+              className={`
+                w-full flex items-center rounded-lg transition-all text-left group relative
+                ${isSidebarCollapsed ? 'justify-center p-3' : 'p-3'}
+                ${currentStep === step.id 
                   ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' 
-                  : 'hover:bg-slate-900 text-slate-400 hover:text-slate-200'
-              }`}
+                  : 'hover:bg-slate-900 text-slate-400 hover:text-slate-200'}
+              `}
             >
-              <div className={`p-1.5 rounded-md mr-3 ${currentStep === step.id ? 'bg-indigo-500/50' : 'bg-slate-900 group-hover:bg-slate-800'}`}>
+              <div className={`
+                rounded-md shrink-0
+                ${!isSidebarCollapsed && 'mr-3'}
+                ${currentStep === step.id ? 'bg-indigo-500/50 p-1.5' : 'bg-slate-900 group-hover:bg-slate-800 p-1.5'}
+              `}>
                 <step.icon size={16} />
               </div>
-              <div>
-                <div className="text-sm font-semibold">{step.title}</div>
-                <div className="text-[10px] opacity-60 truncate max-w-[140px]">{step.description}</div>
-              </div>
-              {currentStep === step.id && <ChevronRight size={14} className="ml-auto" />}
+              
+              {!isSidebarCollapsed && (
+                <div className="overflow-hidden">
+                  <div className="text-sm font-semibold truncate">{step.title}</div>
+                  <div className="text-[10px] opacity-60 truncate max-w-[140px]">{step.description}</div>
+                </div>
+              )}
+
+              {!isSidebarCollapsed && currentStep === step.id && <ChevronRight size={14} className="ml-auto shrink-0" />}
+
+              {/* Tooltip for Collapsed State */}
+              {isSidebarCollapsed && (
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 border border-slate-700">
+                  {step.title}
+                </div>
+              )}
             </button>
           ))}
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden relative bg-slate-900">
+      <div className="flex-1 flex flex-col overflow-hidden relative bg-slate-900 w-full">
         <div className="h-1 bg-slate-800 w-full shrink-0">
            <div 
              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
@@ -114,34 +181,34 @@ export default function DeploymentGuide() {
            />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 md:p-12">
+        <div className="flex-1 overflow-y-auto p-4 md:p-12 scroll-smooth">
           <div className="max-w-5xl mx-auto">
             <StepContent />
           </div>
         </div>
 
         {/* Footer Navigation */}
-        <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-between items-center shrink-0">
+        <div className="p-4 md:p-6 border-t border-slate-800 bg-slate-950 flex justify-between items-center shrink-0 pb-8 md:pb-6 safe-area-pb">
           <button 
             disabled={currentStep === 'intro'}
             onClick={() => {
               const idx = steps.findIndex(s => s.id === currentStep);
-              if (idx > 0) setCurrentStep(steps[idx - 1].id);
+              if (idx > 0) handleStepChange(steps[idx - 1].id);
             }}
-            className="px-4 py-2 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-medium"
+            className="px-4 py-2 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-medium flex items-center gap-2"
           >
-            ← 上一步
+            ← <span className="hidden md:inline">上一步</span>
           </button>
           
           <button 
             disabled={currentStep === 'advanced'}
             onClick={() => {
               const idx = steps.findIndex(s => s.id === currentStep);
-              if (idx < steps.length - 1) setCurrentStep(steps[idx + 1].id);
+              if (idx < steps.length - 1) handleStepChange(steps[idx + 1].id);
             }}
             className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:bg-slate-700 shadow-lg shadow-indigo-900/20"
           >
-            下一步 <ArrowRight size={16} />
+            <span className="hidden md:inline">下一步</span> <ArrowRight size={16} />
           </button>
         </div>
       </div>
@@ -153,17 +220,17 @@ export default function DeploymentGuide() {
 
 const IntroView = ({ setStep }: { setStep: (s: StepId) => void }) => (
   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div className="text-center space-y-4 mb-12">
+    <div className="text-center space-y-4 mb-8 md:mb-12">
       <div className="inline-flex p-4 bg-indigo-500/10 rounded-full mb-4 ring-1 ring-indigo-500/30">
         <Laptop size={48} className="text-indigo-400" />
       </div>
-      <h2 className="text-4xl font-bold text-white">从 0 到 1：全栈 SaaS 落地指南</h2>
-      <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-        欢迎来到 SaaS 开发的真实世界。本指南将带你从 Gemini 生成的单文件原型，进化为拥有前后端分离、数据库支持的现代化全栈应用。
+      <h2 className="text-3xl md:text-4xl font-bold text-white">从 0 到 1：全栈 SaaS 落地指南</h2>
+      <p className="text-base md:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+        欢迎来到 SaaS 开发的真实世界。本指南将带你从 Gemini 生成的单文件原型，进化为拥有前後端分离、数据库支持的现代化全栈应用。
       </p>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
       <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hover:border-indigo-500 transition-colors group">
         <div className="flex items-center gap-3 mb-4 text-indigo-400 group-hover:scale-110 transition-transform origin-left">
            <Layers size={24} />
@@ -192,7 +259,7 @@ const IntroView = ({ setStep }: { setStep: (s: StepId) => void }) => (
     <div className="flex justify-center mt-12">
       <button 
         onClick={() => setStep('stack')}
-        className="px-8 py-4 bg-white text-indigo-900 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center gap-3"
+        className="w-full md:w-auto px-8 py-4 bg-white text-indigo-900 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center justify-center gap-3"
       >
         开始学习 <ArrowRight />
       </button>
@@ -208,34 +275,34 @@ const StackView = () => (
       在开始之前，理解我们手中的工具至关重要。这是目前业界最流行、开发效率最高的 <strong>"现代 Web 开发栈" (Modern Web Stack)</strong>。
     </p>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
       <StackCard 
         icon={Box} 
         color="text-cyan-400"
         title="React" 
         desc="用户界面库 (UI Library)"
-        why="它把网页拆分成一个个独立的'组件' (Component)。就像乐高积木，你写好一个按钮，可以在任何地方复用。Gemini 生成的代码就是基于 React 的。"
+        why="它把网页拆分成一个个独立的'组件'。就像乐高积木，你写好一个按钮，可以在任何地方复用。"
       />
       <StackCard 
         icon={CloudUpload} 
         color="text-yellow-400"
         title="Vite" 
         desc="构建工具 (Build Tool)"
-        why="以前的工具太慢了。Vite (法语'快'的意思) 提供了极速的启动和热更新体验。你改一行代码，浏览器几乎瞬间刷新，不用等。"
+        why="以前的工具太慢了。Vite (法语'快'的意思) 提供了极速的启动和热更新体验。"
       />
       <StackCard 
         icon={Code2} 
         color="text-sky-400"
         title="Tailwind CSS" 
-        desc="原子化样式 (Utility-first CSS)"
-        why="不再需要写单独的 .css 文件并起一堆 class 名。直接在 HTML 里写 `flex p-4 text-white`，所见即所得，开发速度提升 3 倍。"
+        desc="原子化样式 (CSS)"
+        why="不再需要写单独的 .css 文件。直接在 HTML 里写 `flex p-4`，所见即所得，开发速度提升 3 倍。"
       />
       <StackCard 
         icon={Database} 
         color="text-green-400"
         title="Supabase (未来)" 
         desc="后端即服务 (BaaS)"
-        why="它是开源版的 Firebase。即使你不懂复杂的后端运维，也能在几分钟内拥有一个完整的 PostgreSQL 数据库和用户登录系统。"
+        why="它是开源版的 Firebase。即使你不懂复杂的后端运维，也能在几分钟内拥有一个完整的数据库。"
       />
     </div>
   </div>
@@ -245,20 +312,20 @@ const EnvView = () => (
   <div className="space-y-6">
     <Header title="2. 工具准备" subtitle="工欲善其事，必先利其器" />
     
-    <div className="grid grid-cols-1 gap-6">
+    <div className="grid grid-cols-1 gap-4 md:gap-6">
       <ChecklistItem 
         title="Node.js (运行时环境)" 
         cmd="node -v"
         desc="React 和 Vite 都依赖 Node.js 运行。它是这一整套技术栈的地基。"
         link="https://nodejs.org/"
-        linkText="去官网下载 LTS 版本"
+        linkText="下载 LTS 版本"
       />
       <ChecklistItem 
         title="Git (版本控制)" 
         cmd="git --version"
         desc="后悔药 + 传送门。没有它，你不仅无法撤销错误代码，也无法将代码发送到云端服务器。"
         link="https://git-scm.com/downloads"
-        linkText="去官网下载 Git"
+        linkText="下载 Git"
       />
       <ChecklistItem 
         title="Cursor / VS Code (编辑器)" 
@@ -278,24 +345,24 @@ const InitView = () => {
     <div className="space-y-6">
       <Header title="3. 创建项目" subtitle="搭建你的数字基地" />
       
-      <div className="flex p-1 bg-slate-950 rounded-lg w-fit border border-slate-800 mb-6">
+      <div className="flex p-1 bg-slate-950 rounded-lg w-full md:w-fit border border-slate-800 mb-6">
         <button 
           onClick={() => setMode('manual')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${mode === 'manual' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${mode === 'manual' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
         >
           <Terminal size={14} /> 手动搭建 (稳)
         </button>
         <button 
           onClick={() => setMode('ai')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${mode === 'ai' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${mode === 'ai' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          <Bot size={14} /> Cursor AI 搭建 (快)
+          <Bot size={14} /> Cursor AI (快)
         </button>
       </div>
 
       {mode === 'manual' ? (
         <div className="space-y-6 animate-in fade-in duration-300">
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
+          <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6">
             <h3 className="font-bold text-slate-200 mb-4 flex items-center gap-2">
               <span className="bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
               初始化 Vite 脚手架
@@ -305,7 +372,7 @@ const InitView = () => {
               💡 <strong>架构思维：</strong> 我们把项目叫 <code>client</code>，是为了给未来预留 <code>server</code> 文件夹的位置，实现清晰的前后端分离架构。
             </div>
           </div>
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
+          <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6">
             <h3 className="font-bold text-slate-200 mb-4 flex items-center gap-2">
               <span className="bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
               安装依赖
@@ -315,7 +382,7 @@ const InitView = () => {
         </div>
       ) : (
         <div className="space-y-6 animate-in fade-in duration-300">
-           <div className="bg-indigo-900/10 border border-indigo-500/30 p-6 rounded-xl">
+           <div className="bg-indigo-900/10 border border-indigo-500/30 p-4 md:p-6 rounded-xl">
               <h3 className="text-lg font-bold text-indigo-300 mb-2 flex items-center gap-2">
                 <Bot size={20} /> Cursor Composer 魔法
               </h3>
@@ -325,8 +392,7 @@ const InitView = () => {
                 <StepItem n="3" text="复制并输入以下提示词：" />
                 <div className="bg-black p-3 rounded border border-slate-700 font-mono text-sm text-green-400 relative group">
                   <CopyButton text="帮我初始化一个 React + TypeScript 项目，使用 Vite 构建。项目文件夹命名为 'client'。同时帮我安装 TailwindCSS, lucide-react 库，并自动配置好 tailwind.config.js 和 index.css。" />
-                  帮我初始化一个 React + TypeScript 项目，使用 Vite 构建。项目文件夹命名为 'client'。
-                  <br/>同时帮我安装 TailwindCSS, lucide-react 库，并自动配置好 tailwind.config.js 和 index.css。
+                  帮我初始化一个 React + TypeScript 项目... (点击复制)
                 </div>
               </div>
            </div>
@@ -342,7 +408,7 @@ const TailwindView = () => (
     <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-lg flex gap-3 mb-6">
         <CheckCircle2 className="text-amber-500 shrink-0" size={20} />
         <p className="text-sm text-amber-200">
-            如果你刚才用了 <strong>Cursor AI 模式</strong> 并且 AI 告诉你“配置已完成”，可跳过此步。手动模式请务必执行。
+            如果你刚才用了 <strong>Cursor AI 模式</strong> 并且 AI 告诉你“配置已完成”，可跳过此步。
         </p>
     </div>
     <div className="space-y-6">
@@ -469,38 +535,33 @@ const BackendView = () => (
   <div className="space-y-8 animate-in fade-in duration-500">
     <Header title="8. 后端演进" subtitle="从静态网页到动态系统" />
     
-    <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+    <div className="bg-slate-800/50 p-4 md:p-6 rounded-xl border border-slate-700">
         <h3 className="text-white font-bold text-lg mb-4">什么是全栈架构？</h3>
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between text-sm text-slate-400">
             <div className="bg-slate-950 p-4 rounded border border-slate-800 w-full text-center">
-                <div className="text-indigo-400 font-bold mb-1">Frontend (Client)</div>
-                <div className="text-xs">React / Vite</div>
-                <div className="text-xs mt-2 opacity-50">负责画界面，展示数据</div>
+                <div className="text-indigo-400 font-bold mb-1">Frontend</div>
+                <div className="text-xs">React</div>
             </div>
-            <div className="flex flex-col items-center text-slate-600">
-                <span className="text-xs mb-1">HTTP 请求</span>
+            <div className="flex flex-col items-center text-slate-600 rotate-90 md:rotate-0">
                 <ArrowRight size={20} />
-                <span className="text-xs mt-1">JSON 数据</span>
             </div>
             <div className="bg-slate-950 p-4 rounded border border-slate-800 w-full text-center">
-                <div className="text-green-400 font-bold mb-1">Backend (Server)</div>
-                <div className="text-xs">Node.js / Express</div>
-                <div className="text-xs mt-2 opacity-50">负责逻辑，处理支付，保护密钥</div>
+                <div className="text-green-400 font-bold mb-1">Backend</div>
+                <div className="text-xs">Node.js</div>
             </div>
-            <div className="flex flex-col items-center text-slate-600">
+            <div className="flex flex-col items-center text-slate-600 rotate-90 md:rotate-0">
                 <ArrowRight size={20} />
             </div>
             <div className="bg-slate-950 p-4 rounded border border-slate-800 w-full text-center">
                 <div className="text-yellow-400 font-bold mb-1">Database</div>
-                <div className="text-xs">PostgreSQL / Supabase</div>
-                <div className="text-xs mt-2 opacity-50">负责永久保存数据</div>
+                <div className="text-xs">PostgreSQL</div>
             </div>
         </div>
     </div>
 
     <div className="space-y-4">
         <h4 className="text-white font-bold">如何开始后端？</h4>
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-sm text-slate-300">
+        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-sm text-slate-300 overflow-x-auto">
             <div className="flex gap-2"><FolderOpen size={16} className="text-slate-500"/> shadow-op-saas/ <span className="text-slate-600">// 根目录</span></div>
             <div className="pl-6 flex gap-2"><FolderOpen size={16} className="text-indigo-500"/> client/ <span className="text-slate-500">// 前端 (现有)</span></div>
             <div className="pl-6 flex gap-2"><FolderOpen size={16} className="text-green-500"/> server/ <span className="text-green-400">// 后端 (新建)</span></div>
@@ -519,6 +580,26 @@ const DeployView = () => (
   <div className="space-y-8 animate-in fade-in duration-500">
     <Header title="9. 线上部署指南" subtitle="三步走：让全世界访问你的 SaaS" />
     
+    {/* Troubleshooting Section */}
+    <div className="bg-red-900/20 border border-red-500/30 p-4 md:p-6 rounded-xl">
+        <div className="flex items-center gap-3 mb-4 text-red-400">
+            <AlertTriangle size={24} />
+            <h3 className="font-bold text-lg">常见报错与修复</h3>
+        </div>
+        <div className="space-y-4">
+            <div className="bg-slate-950 p-4 rounded-lg border border-red-900/50">
+                <div className="text-xs font-mono text-red-400 mb-2">Error: 'X' is declared but its value is never read.</div>
+                <div className="flex gap-3 text-sm text-slate-400">
+                    <Wrench size={16} className="text-indigo-400 mt-0.5 shrink-0" />
+                    <div>
+                        <strong>原因：</strong> Vercel 嚴格模式禁止未使用的變量。<br/>
+                        <strong>修复：</strong> 刪除代碼中引入了但沒用到的圖標或變量（如 `Cpu`）。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div className="space-y-6">
         {/* Frontend */}
         <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 relative overflow-hidden">
@@ -526,26 +607,11 @@ const DeployView = () => (
             <h3 className="text-white font-bold text-lg mb-2 flex items-center gap-2">
                 <Globe className="text-indigo-400" /> 1. 前端上云 (Vercel)
             </h3>
-            <p className="text-slate-400 text-sm mb-4">最简单的一步。只要你的代码在 GitHub，Vercel 就能自动构建。</p>
             <ol className="list-decimal list-inside text-sm text-slate-300 space-y-2">
-                <li>注册并登录 <a href="https://vercel.com" className="text-indigo-400 hover:underline">Vercel.com</a></li>
+                <li>注册并登录 Vercel.com</li>
                 <li>点击 <strong>Add New Project</strong>，导入你的 GitHub 仓库。</li>
-                <li><strong className="text-amber-400">关键点：</strong>在 "Root Directory" 设置中，点击 Edit 并选择 <code>client</code> 文件夹（因为你的前端代码在那里）。</li>
-                <li>点击 <strong>Deploy</strong>。等待 1 分钟，你就获得了你的专属域名。</li>
-            </ol>
-        </div>
-
-        {/* Database */}
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-2 h-full bg-yellow-500"></div>
-            <h3 className="text-white font-bold text-lg mb-2 flex items-center gap-2">
-                <Database className="text-yellow-400" /> 2. 数据库上云 (Supabase)
-            </h3>
-            <p className="text-slate-400 text-sm mb-4">我们需要一个地方存数据。Supabase 提供免费的 PostgreSQL 数据库。</p>
-            <ol className="list-decimal list-inside text-sm text-slate-300 space-y-2">
-                <li>访问 <a href="https://supabase.com" className="text-indigo-400 hover:underline">Supabase.com</a> 创建项目。</li>
-                <li>在设置中找到 "Database URL" (连接字符串)。</li>
-                <li>将这个 URL 复制，准备填入后端的 <code>.env</code> 文件中。</li>
+                <li><strong className="text-amber-400">关键点：</strong>在 "Root Directory" 设置中，点击 Edit 并选择 <code>client</code> 文件夹。</li>
+                <li>点击 <strong>Deploy</strong>。</li>
             </ol>
         </div>
 
@@ -553,21 +619,18 @@ const DeployView = () => (
         <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-2 h-full bg-green-500"></div>
             <h3 className="text-white font-bold text-lg mb-2 flex items-center gap-2">
-                <Server className="text-green-400" /> 3. 后端上云 (Render / Railway)
+                <Server className="text-green-400" /> 2. 后端上云 (Render)
             </h3>
-            <p className="text-slate-400 text-sm mb-4">Vercel 对后端支持有限，推荐使用 Render 托管 Node.js 服务。</p>
             <ol className="list-decimal list-inside text-sm text-slate-300 space-y-2">
-                <li>注册 <a href="https://render.com" className="text-indigo-400 hover:underline">Render.com</a>。</li>
-                <li>点击 New &rarr; <strong>Web Service</strong>，连接同一个 GitHub 仓库。</li>
-                <li><strong className="text-amber-400">关键点：</strong>
+                <li>注册 Render.com。</li>
+                <li>点击 New &rarr; <strong>Web Service</strong>，连接 GitHub。</li>
+                <li><strong className="text-amber-400">关键配置：</strong>
                     <ul className="pl-6 mt-1 space-y-1 text-slate-400 list-disc">
-                        <li>Root Directory: 填 <code>server</code></li>
+                        <li>Root Directory: <code>server</code></li>
                         <li>Build Command: <code>npm install</code></li>
                         <li>Start Command: <code>node index.js</code></li>
                     </ul>
                 </li>
-                <li>在 Environment Variables 中填入 API Key 和 Supabase 的数据库 URL。</li>
-                <li>Deploy! 你会获得后端 API 地址，记得把它更新到前端代码里。</li>
             </ol>
         </div>
     </div>
@@ -578,11 +641,6 @@ const AdvancedView = () => (
   <div className="space-y-8 animate-in fade-in duration-500">
     <Header title="10. 进阶：分支与 CI/CD" subtitle="如何像大公司一样管理代码？" />
     
-    {/* Intro */}
-    <p className="text-slate-400">
-        你在 GitHub 上看到的术语可能让你困惑。别担心，对于现在的你來說，这些大部分是自动完成的。
-    </p>
-
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Branching */}
         <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
@@ -590,67 +648,50 @@ const AdvancedView = () => (
                 <div className="p-2 bg-purple-900/20 rounded text-purple-400"><GitBranch size={24} /></div>
                 <h3 className="font-bold text-white text-lg">分支 (Branches)</h3>
             </div>
-            
             <div className="space-y-4 text-sm text-slate-400">
                 <p>想象 Git 宇宙中的 <strong>"平行时空"</strong>。</p>
-                
                 <div className="bg-slate-900 p-4 rounded border border-slate-800 flex flex-col gap-4 relative overflow-hidden">
-                    {/* Main Branch */}
                     <div className="flex items-center gap-3 z-10">
-                        <div className="w-2 h-full bg-green-500/20 absolute left-6 top-0 bottom-0"></div>
                         <div className="w-4 h-4 rounded-full bg-green-500 z-10"></div>
                         <div className="flex-1">
                             <span className="text-green-400 font-mono font-bold">main</span>
-                            <p className="text-xs opacity-60">主宇宙：这里是用户看到的稳定版本。</p>
+                            <p className="text-xs opacity-60">主宇宙 (稳定版)</p>
                         </div>
                     </div>
-
-                    {/* Feature Branch */}
                     <div className="flex items-center gap-3 pl-8 z-10 relative">
                         <GitMerge className="text-slate-600 absolute left-2 top-[-10px] rotate-90" size={20} />
                         <div className="w-4 h-4 rounded-full bg-purple-500 z-10"></div>
                         <div className="flex-1">
-                            <span className="text-purple-400 font-mono font-bold">feature/login</span>
-                            <p className="text-xs opacity-60">实验宇宙：在这里开发新功能，怎么改都不会搞坏主宇宙。</p>
+                            <span className="text-purple-400 font-mono font-bold">dev</span>
+                            <p className="text-xs opacity-60">实验宇宙 (开发版)</p>
                         </div>
                     </div>
-                </div>
-
-                <div className="bg-purple-900/10 p-3 rounded border border-purple-500/20 text-xs text-purple-200">
-                    <strong>新手建议：</strong> 暂时只用 <code>main</code> 分支即可。等你有了团队，或者需要开发很复杂的功能时，再开新分支。
                 </div>
             </div>
         </div>
 
-        {/* CI/CD */}
+        {/* CI/CD (Mobile Optimized Visualization) */}
         <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-orange-900/20 rounded text-orange-400"><Workflow size={24} /></div>
                 <h3 className="font-bold text-white text-lg">CI/CD 流水线</h3>
             </div>
             
-            <div className="space-y-4 text-sm text-slate-400">
-                <p>全称是 <strong>持续集成 / 持续部署</strong>。简单说就是 <strong>"全自动外卖厨房"</strong>。</p>
-                
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800">
-                        <Laptop size={16} className="text-slate-500" />
-                        <span>1. 你在本地写好代码，推送到 GitHub。</span>
-                    </div>
-                    <div className="flex justify-center"><ArrowRight size={16} className="rotate-90" /></div>
-                    <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800">
-                        <Bot size={16} className="text-blue-400" />
-                        <span>2. GitHub 告诉 Vercel: "有新货到了！"</span>
-                    </div>
-                    <div className="flex justify-center"><ArrowRight size={16} className="rotate-90" /></div>
-                    <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800">
-                        <Rocket size={16} className="text-green-400" />
-                        <span>3. Vercel 自动打包、测试、发布上线。</span>
-                    </div>
+            {/* Responsive Flex Direction: col on mobile, row on desktop */}
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 text-sm text-slate-400">
+                <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800 w-full md:w-auto">
+                    <Laptop size={16} className="text-slate-500" />
+                    <span>本地开发</span>
                 </div>
-
-                <div className="bg-green-900/10 p-3 rounded border border-green-500/20 text-xs text-green-200">
-                    <strong>好消息：</strong> 只要你把 GitHub 連接到 Vercel，這套流水線就自動建好了。以後你每次 <code>git push</code>，網站就會自動更新！
+                <ArrowRight size={16} className="rotate-90 md:rotate-0 self-center" />
+                <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800 w-full md:w-auto">
+                    <Bot size={16} className="text-blue-400" />
+                    <span>GitHub</span>
+                </div>
+                <ArrowRight size={16} className="rotate-90 md:rotate-0 self-center" />
+                <div className="flex items-center gap-3 bg-slate-900 p-3 rounded border border-slate-800 w-full md:w-auto">
+                    <Rocket size={16} className="text-green-400" />
+                    <span>Vercel 上线</span>
                 </div>
             </div>
         </div>
@@ -661,9 +702,9 @@ const AdvancedView = () => (
 // --- 通用 UI 组件 ---
 
 const Header = ({ title, subtitle }: { title: string, subtitle: string }) => (
-  <div className="mb-8 border-b border-slate-800 pb-4">
+  <div className="mb-6 md:mb-8 border-b border-slate-800 pb-4">
     <h2 className="text-2xl md:text-3xl font-bold text-white">{title}</h2>
-    <p className="text-indigo-400 mt-2 text-base md:text-lg">{subtitle}</p>
+    <p className="text-indigo-400 mt-2 text-sm md:text-base">{subtitle}</p>
   </div>
 );
 
@@ -736,16 +777,16 @@ const CopyButton = ({ text }: { text: string }) => {
 };
 
 const ChecklistItem = ({ title, cmd, desc, link, linkText }: any) => (
-  <div className="bg-slate-950 border border-slate-800 p-5 rounded-xl flex gap-4 items-start group hover:border-indigo-500/30 transition-colors">
-     <div className="mt-1 text-indigo-500">
+  <div className="bg-slate-950 border border-slate-800 p-5 rounded-xl flex flex-col md:flex-row gap-4 items-start group hover:border-indigo-500/30 transition-colors">
+     <div className="mt-1 text-indigo-500 shrink-0">
         <CheckSquare size={20} />
      </div>
-     <div className="flex-1">
+     <div className="flex-1 w-full">
         <h4 className="font-bold text-slate-200 text-base mb-1">{title}</h4>
         <p className="text-slate-400 text-sm mb-3 leading-relaxed">{desc}</p>
         
         {cmd && (
-            <div className="bg-black/50 rounded px-3 py-2 font-mono text-xs text-green-400 w-fit mb-3 border border-slate-800">
+            <div className="bg-black/50 rounded px-3 py-2 font-mono text-xs text-green-400 w-full md:w-fit mb-3 border border-slate-800 overflow-x-auto">
                 &gt; {cmd}
             </div>
         )}
